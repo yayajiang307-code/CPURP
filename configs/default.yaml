@@ -1,0 +1,45 @@
+# Default config for Uncertain KG relation prediction (PyTorch)
+# CLI args take precedence over this file.
+
+seed: 42
+
+device: auto   # auto | cpu | cuda
+
+training:
+  epochs: 50
+  batch_size: 128
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip_norm: 1.0
+  log_every: 50
+  select_best_by: mrr   # mrr | accuracy
+
+model:
+  hidden_dim: 128
+  num_layers: 2
+  dropout: 0.1
+
+  # relation context (RC) ablation toggle
+  use_relation_context: true
+  use_neighbor_gate: true
+  context_pooling: gate  # gate | mean
+
+  # relation paths (RP) ablation toggle
+  use_relation_paths: true
+  use_query_path_attention: true
+  path_pooling: att  # att | mean
+
+  max_hop: 2
+  max_path_len: 4
+  max_paths: 32
+
+  use_confidence_head: true
+  lambda_conf: 0.5
+
+  # internal safety caps to keep batch tensors bounded
+  max_context_edges: 128
+
+paths:
+  train_file: train.tsv
+  valid_file: val.tsv
+  test_file: test.tsv
