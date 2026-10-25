@@ -1,59 +1,82 @@
-# PathCon
+CPURP: Relation Prediction in Uncertain Knowledge Graphs with Relational Context and Relation Paths
 
-This repository is the Tensorflow implementation of PathCon ([paper](https://dl.acm.org/doi/abs/10.1145/3447548.3467247)):
-> Relational Message Passing for Knowledge Graph Completion  
-Hongwei Wang, Hongyu Ren, Jure Leskovec  
-In Proceedings of The 27th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD 2021)
+This repository contains the anonymous supplementary implementation for CPURP, a context- and path-based model for relation prediction in uncertain knowledge graphs (UKGs).
 
-(A PyTorch implementation of PathCon can be found [here](https://github.com/hyren/PathCon))
+In a UKG, a fact is represented as a quadruple (h, r, t, w), where h and t are entities, r is a relation, and w is a confidence score. Given an entity pair (h, t), CPURP predicts a relation and estimates the confidence of the resulting fact.
 
-![](https://github.com/hwwang55/PathCon/blob/master/model.png)
+Overview
 
-PathCon considers relational context and relational paths of (head, tail) pair in knowledge graphs for link prediction.
-PathCon achieves substantial gains over state-of-the-art baselines.
-Below is the result of Hit@1 on the test set of FB15K, FB15K-237, WN18, WN18RR, NELL995, and DDB14 datasets for relation prediction task:
+CPURP combines two complementary types of structural evidence:
 
-| Method      | FB15K | FB15K-237 | WN18  | WN18RR | NELL995 | DDB14 |
-| :---------: | :---: | :------:  | :---: | :----: | :----:  | :---: |
-| TransE      | 94.0  | 94.6      | 95.5  | 66.9   | 78.1    | 94.8  |
-| RotatE      | 96.7  | 95.1      | 97.9  | 73.5   | 69.1    | 93.4  |
-| QuatE       | 97.2  | 95.8      | 97.5  | 76.7   | 70.6    | 92.2  |
-| DRUM        | 94.5  | 90.5      | 95.6  | 77.8   | 64.0    | 93.0  |
-| __PathCon__ | __97.4 (+/-0.2)__ | __96.4 (+/-0.1)__ | __98.8 (+/-0.1)__ | __95.4 (+/-0.2)__ | __84.4 (+/-0.4)__ | __96.6 (+/-0.1)__ |
+Relational context around the head and tail entities, modeled with edge-centered message passing and uncertainty-aware neighbor gating.
 
-For more results, please refer to the original paper.
+Uncertain multi-hop relation paths between the entity pair, encoded with path semantics and confidence statistics, then aggregated by candidate-relation-aware attention.
 
-### Files in the folder
+The model is jointly optimized for relation prediction and confidence estimation.
 
-- `data/`
-  - `FB15k/`
-  - `FB15k-237/`
-  - `wn18/`
-  - `wn18rr/`
-  - `NELL995/`
-  - `DDB14/`
-- `src/`: implementation of PathCon
+Repository structure
 
-__Note__: We provide a `cache/` folder for each dataset, which caches the pre-computed relational paths for the dataset.
-This folder is not required for running the code, because relational paths will be counted (and cached) when running the code if no corresponding cache file is found. 
-**If you are going to run FB15K-237 with max_path_len=3, please first download and unzip ``paths_3.zip`` from [here](https://drive.google.com/file/d/1uF42OgIQY0f_G8z0Wwk90AQ_KEueqhsv/view?usp=sharing) and put all unzipped files under ``FB15k-237/cache/``** (these files cannot be uploaded to GitHub due to the limitation on file size).
+.
+├── configs/                 # Experiment configuration files
+├── data/                    # Dataset directory (see Data preparation)
+├── scripts/                 # Shell scripts for experiments
+├── src/                     # Source code
+├── ukg/                     # UKG data processing and model utilities
+├── train.py                 # Training entry point
+├── evaluate.py              # Evaluation entry point
+├── run_sensitivity.py       # Sensitivity-analysis entry point
+└── plot_sensitivity.py      # Plotting utility for sensitivity results
 
+Requirements
 
+The code was developed with Python 3.9+ and PyTorch. Create a clean environment, then install the packages required by the imported modules in the source code. A typical setup is:
 
-### Running the code
+python -m venv .venv
+source .venv/bin/activate  # Windows PowerShell: .venv\\Scripts\\Activate.ps1
+pip install torch numpy scipy pyyaml tqdm scikit-learn
 
-```
-$ python main.py
-```
-__Note__: The default dataset is set as WN18RR.
-Hyper-parameter settings for other datasets are provided in  `main.py`.
+If a module is reported as missing when running the code, install it with pip install <module-name>.
 
+Data preparation
 
-### Required packages
+Experiments use the public uncertain knowledge graph benchmarks CN15K, NL27K, and PPI5K. Obtain the datasets from their original public sources, then place them under data/ using the paths expected by configs/default.yaml.
 
-The code has been tested running under Python 3.6.5, with the following packages installed (along with their dependencies):
+Before training, open configs/default.yaml and verify:
 
-- tensorflow == 1.12.0
-- numpy == 1.16.5
-- scipy == 1.3.1
-- sklearn == 0.21.3
+the dataset name;
+
+the dataset directory;
+
+model and training hyperparameters; and
+
+the output directory for checkpoints and logs.
+
+Generated checkpoints, logs, cached files, and result files are intentionally excluded from this repository.
+
+Running experiments
+
+The default configuration is located at configs/default.yaml.
+
+# Train a model
+python train.py --config configs/default.yaml
+
+# Evaluate a trained model
+python evaluate.py --config configs/default.yaml
+
+# Run sensitivity experiments
+python run_sensitivity.py --config configs/default.yaml
+
+# Plot sensitivity results after they have been generated
+python plot_sensitivity.py
+
+If your local version of an entry script uses a different command-line argument name, run python <script>.py --help and use the configuration argument shown there.
+
+Reproducibility notes
+
+For each benchmark, use the split files and preprocessing procedure provided with that benchmark. Use the hyperparameters in configs/default.yaml for the main experiments, and run multiple random seeds when reproducing the reported averages.
+
+The supplementary repository is provided for anonymous review. It intentionally contains no author names, affiliations, email addresses, or private experimental artifacts.
+
+License
+
+See LICENSE for licensing information.
